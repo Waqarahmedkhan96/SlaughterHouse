@@ -1,0 +1,32 @@
+Assignment 2 - Excecution
+
+1. Entities ✅
+
+2. Repositories ✅
+
+3. RecallQueryService ✅
+
+4. .proto ✅
+
+5. for stubs (Maven clean compile ✅ (you see generated files)
+
+6. TraceServiceImpl ✅
+
+7. application.properties (DB config) ✅
+
+Seed test data ✅
+
+JUnit tests ✅
+
+Test with BloomRPC ✅
+
+
+
+
+
+Testing the traceability service
+To verify the correctness of the recall logic, I implemented integration tests for the RecallQueryService using JUnit and Spring Boot’s @SpringBootTest. Each test creates a small, realistic object graph in the database (Animal → Tray → Part → Product) using the real JPA repositories.
+In the first test, I save an animal, a part, and a product, and then call getAnimalRegistrationNumbersByProductId(productId). I assert that the returned list contains the expected animal registration number. In the second test, I do the inverse: I create the same structure and call getProductIdsByAnimalRegistrationNumber(regNo), and assert that the returned list contains the correct product ID. These tests exercise the whole stack – JPA mappings, TraceRepository JPQL queries, and the RecallQueryService – and give confidence that the traceability queries used by the gRPC service are working as intended.
+
+
+“I implemented two integration tests for the traceability logic using JUnit and Spring Boot’s @SpringBootTest. Each test builds a small graph in the database (animal, tray, part, product) using the real repositories. The first test verifies that, given a product ID, RecallQueryService.getAnimalRegistrationNumbersByProductId returns the correct animal registration number. The second test verifies the reverse direction: given an animal registration number, getProductIdsByAnimalRegistrationNumber returns the correct product ID. The logs show the corresponding SQL JOINs executed by Hibernate, which confirms that my JPQL queries and JPA mappings (including the product_part join table) are working as expected.”

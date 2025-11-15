@@ -1,0 +1,36 @@
+// Step 4 .proto
+//“Language/Contract/Script- that describes what methods exist and what messages they send/receive.”
+syntax = "proto3";
+
+package via.pro3.slaughterhouse;
+option java_multiple_files = true;
+option java_package = "via.pro3.slaughterhouse.generated";
+
+// Service name in proto
+service TraceService {
+  // product_id -> list of animal registration numbers
+  rpc GetAnimalsByProduct (GetAnimalsByProductRequest)
+      returns (GetAnimalsByProductResponse);
+
+  // animal_reg_number -> list of product IDs
+  rpc GetProductsByAnimal (GetProductsByAnimalRequest)
+      returns (GetProductsByAnimalResponse);
+}
+
+// Request: give me animals in this product
+message GetAnimalsByProductRequest {
+  string product_id = 1;  // UUID text
+}
+
+message GetAnimalsByProductResponse {
+  repeated string animal_registration_numbers = 1;
+}
+
+// Request: give me products for this animal
+message GetProductsByAnimalRequest {
+  string animal_registration_number = 1;
+}
+
+message GetProductsByAnimalResponse {
+  repeated string product_ids = 1; // UUIDs as strings
+}
