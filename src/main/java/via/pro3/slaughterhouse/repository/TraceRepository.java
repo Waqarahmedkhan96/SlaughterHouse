@@ -1,17 +1,16 @@
-package via.pro3.slaughterhouse.repo;
+package via.pro3.slaughterhouse.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import via.pro3.slaughterhouse.domain.Product;
+import via.pro3.slaughterhouse.entity.Product;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Read-side repository for traceability / recall.
  * Based on Product, but exposes cross-entity JPQL queries.
  */
-public interface TraceRepository extends JpaRepository<Product, UUID> {
+public interface TraceRepository extends JpaRepository<Product, Long> {
 
     // 1) productId -> all animal registration numbers involved in that product
     @Query("""
@@ -21,7 +20,7 @@ public interface TraceRepository extends JpaRepository<Product, UUID> {
       join prt.animal a
       where p.id = :productId
       """)
-    List<String> findAnimalRegistrationNumbersByProductId(UUID productId);
+    List<String> findAnimalRegistrationNumbersByProductId(Long productId);
 
     // 2) registrationNumber -> all product IDs that contain parts from that animal
     @Query("""
@@ -31,5 +30,5 @@ public interface TraceRepository extends JpaRepository<Product, UUID> {
       join prt.animal a
       where a.registrationNumber = :registrationNumber
       """)
-    List<UUID> findProductIdsByAnimalRegistrationNumber(String registrationNumber);
+    List<Long> findProductIdsByAnimalRegistrationNumber(String registrationNumber);
 }

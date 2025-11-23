@@ -3,13 +3,12 @@ package via.pro3.slaughterhouse.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import via.pro3.slaughterhouse.domain.*;
-import via.pro3.slaughterhouse.repo.*;
+import via.pro3.slaughterhouse.entity.*;
+import via.pro3.slaughterhouse.repository.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +68,7 @@ class RecallQueryServiceTest {
         product = productRepo.save(product);
 
         // Act: call the other service method
-        List<UUID> productIds =
+        List<Long> productIds =
                 recallService.getProductIdsByAnimalRegistrationNumber("DK-TEST2");
 
         // Assert: returned list contains our product's ID

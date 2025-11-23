@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.domain;
+package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 import java.util.HashSet;
@@ -12,10 +12,10 @@ import java.util.UUID;
 @Entity
 public class Product {
 
-    // Primary key, generated UUID for each product
+    // Primary key, generated ID for each product
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String kind; // "Half animal", "Pack of ribs" , SAME_TYPE | HALF_ANIMAL
@@ -38,7 +38,7 @@ public class Product {
 
     // --- getters / setters ---
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

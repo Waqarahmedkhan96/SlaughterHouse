@@ -19,7 +19,7 @@ service TraceService {
 
 // Request: give me animals in this product
 message GetAnimalsByProductRequest {
-  string product_id = 1;  // UUID text
+  string product_id = 1;  // ID text
 }
 
 message GetAnimalsByProductResponse {
@@ -32,5 +32,5 @@ message GetProductsByAnimalRequest {
 }
 
 message GetProductsByAnimalResponse {
-  repeated string product_ids = 1; // UUIDs as strings
+  repeated string product_ids = 1; // IDs as strings
 }

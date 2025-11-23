@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.domain;
+package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 
@@ -13,8 +13,8 @@ public class Part {
 
     // Primary key, generated UUID for each part
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private double weight; // kg
@@ -40,7 +40,8 @@ public class Part {
 
     // --- getters / setters ---
 
-    public UUID getId() {
+    public Long
+    getId() {
         return id;
     }
 

@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.domain;
+package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -13,8 +13,8 @@ public class Animal {
 
     // Primary key, generated UUID (database-safe unique id)
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String registrationNumber;
@@ -39,7 +39,7 @@ public class Animal {
 
     // --- getters / setters ---
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

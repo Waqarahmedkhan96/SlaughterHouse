@@ -1,5 +1,3 @@
-// Step 6 – TraceServiceImpl
-//“Your implementation of the gRPC service using the Java service.”
 package via.pro3.slaughterhouse.grpc;
 
 import io.grpc.stub.StreamObserver;
@@ -12,7 +10,6 @@ import via.pro3.slaughterhouse.generated.TraceServiceGrpc;
 import via.pro3.slaughterhouse.service.RecallQueryService;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * gRPC server for the TraceService defined in trace_service.proto.
@@ -33,12 +30,15 @@ public class TraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase {
             GetAnimalsByProductRequest req,
             StreamObserver<GetAnimalsByProductResponse> out) {
 
-        // product_id comes as string (UUID text)
+        // product_id comes as string (text form of Long)
         String productIdText = req.getProductId();
 
-        // Service handles conversion + DB call
+        // 🔹 convert String → Long for the service layer
+        Long productId = Long.parseLong(productIdText);
+
+        // Service does DB query using Long id
         List<String> regs =
-                recallService.getAnimalRegistrationNumbersByProductId(productIdText);
+                recallService.getAnimalRegistrationNumbersByProductId(productId);
 
         GetAnimalsByProductResponse resp = GetAnimalsByProductResponse.newBuilder()
                 .addAllAnimalRegistrationNumbers(regs)
@@ -55,11 +55,11 @@ public class TraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase {
 
         String animalReg = req.getAnimalRegistrationNumber();
 
-        // Service returns List<UUID> -> convert to List<String> for the proto response
+        // Service returns List<Long> -> convert to List<String> for proto response
         List<String> productIds = recallService
                 .getProductIdsByAnimalRegistrationNumber(animalReg)
                 .stream()
-                .map(UUID::toString)
+                .map(id -> id.toString())       // 🔹 avoid ambiguous Long::toString
                 .toList();
 
         GetProductsByAnimalResponse resp = GetProductsByAnimalResponse.newBuilder()

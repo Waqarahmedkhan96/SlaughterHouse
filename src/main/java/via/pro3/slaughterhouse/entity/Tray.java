@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.domain;
+package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 
@@ -15,8 +15,8 @@ public class Tray {
 
     // Primary key, generated UUID for this tray
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String type; // must match Part.type for parts placed here
@@ -38,7 +38,7 @@ public class Tray {
 
     // --- getters / setters ---
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
