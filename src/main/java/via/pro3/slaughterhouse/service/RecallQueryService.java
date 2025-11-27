@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import via.pro3.slaughterhouse.repository.TraceRepository;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Application service for recall/traceability use cases.

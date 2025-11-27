@@ -2,7 +2,6 @@ package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Animal is the origin of all parts.

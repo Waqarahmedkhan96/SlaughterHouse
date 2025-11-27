@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     // handle AnimalNotFoundException
-    @ExceptionHandler(AnimalExceptions.AnimalNotFoundException.class)
-    public ResponseEntity<String> handleAnimalNotFound(AnimalExceptions.AnimalNotFoundException ex) {
+    @ExceptionHandler(AnimalRegistrationExceptions.AnimalNotFoundException.class)
+    public ResponseEntity<String> handleAnimalNotFound(AnimalRegistrationExceptions.AnimalNotFoundException ex) {
         // 404 Not Found
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -21,8 +21,8 @@ public class GlobalExceptionHandler {
     }
 
     // handle AnimalAlreadyExistsException
-    @ExceptionHandler(AnimalExceptions.AnimalAlreadyExistsException.class)
-    public ResponseEntity<String> handleAnimalAlreadyExists(AnimalExceptions.AnimalAlreadyExistsException ex) {
+    @ExceptionHandler(AnimalRegistrationExceptions.AnimalAlreadyExistsException.class)
+    public ResponseEntity<String> handleAnimalAlreadyExists(AnimalRegistrationExceptions.AnimalAlreadyExistsException ex) {
         // 409 Conflict
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)

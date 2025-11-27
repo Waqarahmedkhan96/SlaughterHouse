@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnimalDtos {
+public class AnimalRegistrationDtos {
 
     // ---------------- CREATE ----------------
     public static class CreateAnimalDto {

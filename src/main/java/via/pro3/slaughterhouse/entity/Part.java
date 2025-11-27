@@ -2,8 +2,6 @@ package via.pro3.slaughterhouse.entity;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 /**
  * Part represents one cut piece from an animal.
  * It links back to Animal and is placed on a Tray.

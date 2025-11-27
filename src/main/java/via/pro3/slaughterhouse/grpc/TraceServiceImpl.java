@@ -30,11 +30,20 @@ public class TraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase {
             GetAnimalsByProductRequest req,
             StreamObserver<GetAnimalsByProductResponse> out) {
 
-        // product_id comes as string (text form of Long)
         String productIdText = req.getProductId();
 
-        // 🔹 convert String → Long for the service layer
-        Long productId = Long.parseLong(productIdText);
+// 🔹 safe convert String → Long for the service layer
+        Long productId;
+        try {
+            productId = Long.parseLong(productIdText);
+        } catch (NumberFormatException e) {
+            out.onError(
+                    io.grpc.Status.INVALID_ARGUMENT
+                            .withDescription("product_id must be a number: " + productIdText)
+                            .asRuntimeException()
+            );
+            return;
+        }
 
         // Service does DB query using Long id
         List<String> regs =
@@ -55,11 +64,21 @@ public class TraceServiceImpl extends TraceServiceGrpc.TraceServiceImplBase {
 
         String animalReg = req.getAnimalRegistrationNumber();
 
-        // Service returns List<Long> -> convert to List<String> for proto response
+        // 🔹 Validate input: must not be empty "" or blank
+        if (animalReg == null || animalReg.isBlank()) {
+            out.onError(
+                    io.grpc.Status.INVALID_ARGUMENT
+                            .withDescription("animal_registration_number cannot be empty")
+                            .asRuntimeException()
+            );
+            return;
+        }
+
+        // Database query (List<Long>)
         List<String> productIds = recallService
                 .getProductIdsByAnimalRegistrationNumber(animalReg)
                 .stream()
-                .map(id -> id.toString())       // 🔹 avoid ambiguous Long::toString
+                .map(id -> id.toString())
                 .toList();
 
         GetProductsByAnimalResponse resp = GetProductsByAnimalResponse.newBuilder()

@@ -3,7 +3,7 @@ package via.pro3.slaughterhouse.exception;
 /**
  * All Animal-related exceptions in one class.
  */
-public class AnimalExceptions {
+public class AnimalRegistrationExceptions {
 
     // not found
     public static class AnimalNotFoundException extends RuntimeException {

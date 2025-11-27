@@ -3,7 +3,7 @@ package via.pro3.slaughterhouse.entity;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
+
 
 /**
  * Product is the final packed good.
@@ -18,7 +18,7 @@ public class Product {
     private Long id;
 
     @Column(nullable = false)
-    private String kind; // "Half animal", "Pack of ribs" , SAME_TYPE | HALF_ANIMAL
+    private ProductKind kind; // "Half animal", "Pack of ribs" , SAME_TYPE | HALF_ANIMAL
 
     // join table product_items(product_id, part_id)
     @ManyToMany
@@ -29,10 +29,9 @@ public class Product {
     )
     private Set<Part> parts = new HashSet<>();
 
-    public Product() {
-    }
+    public Product() {}
 
-    public Product(String kind) {
+    public Product(ProductKind kind) {
         this.kind = kind;
     }
 
@@ -42,11 +41,11 @@ public class Product {
         return id;
     }
 
-    public String getKind() {
+    public ProductKind getKind() {
         return kind;
     }
 
-    public void setKind(String kind) {
+    public void setKind(ProductKind kind) {
         this.kind = kind;
     }
 

@@ -3,18 +3,18 @@ package via.pro3.slaughterhouse.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import via.pro3.slaughterhouse.dto.AnimalDtos;
-import via.pro3.slaughterhouse.exception.AnimalExceptions;
+import via.pro3.slaughterhouse.dto.AnimalRegistrationDtos;
+import via.pro3.slaughterhouse.exception.AnimalRegistrationExceptions;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class AnimalServiceTest {
+class AnimalRegistrationServiceTest {
 
     @Autowired
-    private AnimalService animalService;
+    private AnimalRegistrationService animalService;
 
     // ---------- CREATE ----------
 
@@ -25,15 +25,15 @@ class AnimalServiceTest {
         // if exists → delete first (avoid duplicate error)
         try {
             animalService.deleteAnimal(reg);
-        } catch (AnimalExceptions.AnimalNotFoundException ignored) {}
+        } catch (AnimalRegistrationExceptions.AnimalNotFoundException ignored) {}
 
-        AnimalDtos.CreateAnimalDto dto = new AnimalDtos.CreateAnimalDto();
+        AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
         dto.setRegistrationNumber(reg);
         dto.setWeight(400.5);
         dto.setArrivalDate(LocalDate.now());
         dto.setOrigin("TestFarm");
 
-        AnimalDtos.AnimalDto created = animalService.createAnimal(dto);
+        AnimalRegistrationDtos.AnimalDto created = animalService.createAnimal(dto);
 
         assertEquals(reg, created.getRegistrationNumber());
         assertEquals("TestFarm", created.getOrigin());
@@ -48,7 +48,7 @@ class AnimalServiceTest {
             animalService.getAnimalByRegistrationNumber(reg);
         } catch (Exception e) {
             // create if missing
-            AnimalDtos.CreateAnimalDto dto = new AnimalDtos.CreateAnimalDto();
+            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
             dto.setRegistrationNumber(reg);
             dto.setWeight(500.0);
             dto.setArrivalDate(LocalDate.now());
@@ -56,14 +56,14 @@ class AnimalServiceTest {
             animalService.createAnimal(dto);
         }
 
-        AnimalDtos.CreateAnimalDto duplicate = new AnimalDtos.CreateAnimalDto();
+        AnimalRegistrationDtos.CreateAnimalDto duplicate = new AnimalRegistrationDtos.CreateAnimalDto();
         duplicate.setRegistrationNumber(reg);
         duplicate.setWeight(900.0);
         duplicate.setArrivalDate(LocalDate.now());
         duplicate.setOrigin("Farm Y");
 
         assertThrows(
-                AnimalExceptions.AnimalAlreadyExistsException.class,
+                AnimalRegistrationExceptions.AnimalAlreadyExistsException.class,
                 () -> animalService.createAnimal(duplicate)
         );
     }
@@ -72,7 +72,7 @@ class AnimalServiceTest {
 
     @Test
     void getAnimalByRegistrationNumber_found() {
-        AnimalDtos.AnimalDto dto =
+        AnimalRegistrationDtos.AnimalDto dto =
                 animalService.getAnimalByRegistrationNumber("DK-0001");
 
         assertEquals("DK-0001", dto.getRegistrationNumber());
@@ -82,7 +82,7 @@ class AnimalServiceTest {
     @Test
     void getAnimalByRegistrationNumber_notFound() {
         assertThrows(
-                AnimalExceptions.AnimalNotFoundException.class,
+                AnimalRegistrationExceptions.AnimalNotFoundException.class,
                 () -> animalService.getAnimalByRegistrationNumber("DOES-NOT-EXIST")
         );
     }
@@ -118,7 +118,7 @@ class AnimalServiceTest {
         try {
             animalService.getAnimalByRegistrationNumber(reg);
         } catch (Exception e) {
-            AnimalDtos.CreateAnimalDto dto = new AnimalDtos.CreateAnimalDto();
+            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
             dto.setRegistrationNumber(reg);
             dto.setWeight(300.0);
             dto.setArrivalDate(LocalDate.now());
@@ -126,11 +126,11 @@ class AnimalServiceTest {
             animalService.createAnimal(dto);
         }
 
-        AnimalDtos.UpdateAnimalDto updateDto = new AnimalDtos.UpdateAnimalDto();
+        AnimalRegistrationDtos.UpdateAnimalDto updateDto = new AnimalRegistrationDtos.UpdateAnimalDto();
         updateDto.setWeight(777.7);
         updateDto.setOrigin("NewFarm");
 
-        AnimalDtos.AnimalDto updated =
+        AnimalRegistrationDtos.AnimalDto updated =
                 animalService.updateAnimal(reg, updateDto);
 
         assertEquals(777.7, updated.getWeight());
@@ -139,11 +139,11 @@ class AnimalServiceTest {
 
     @Test
     void updateAnimal_notFound() {
-        AnimalDtos.UpdateAnimalDto update = new AnimalDtos.UpdateAnimalDto();
+        AnimalRegistrationDtos.UpdateAnimalDto update = new AnimalRegistrationDtos.UpdateAnimalDto();
         update.setWeight(999.9);
 
         assertThrows(
-                AnimalExceptions.AnimalNotFoundException.class,
+                AnimalRegistrationExceptions.AnimalNotFoundException.class,
                 () -> animalService.updateAnimal("NO-ANIMAL", update)
         );
     }
@@ -158,7 +158,7 @@ class AnimalServiceTest {
         try {
             animalService.getAnimalByRegistrationNumber(reg);
         } catch (Exception e) {
-            AnimalDtos.CreateAnimalDto dto = new AnimalDtos.CreateAnimalDto();
+            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
             dto.setRegistrationNumber(reg);
             dto.setWeight(300.0);
             dto.setArrivalDate(LocalDate.now());
@@ -169,7 +169,7 @@ class AnimalServiceTest {
         animalService.deleteAnimal(reg);
 
         assertThrows(
-                AnimalExceptions.AnimalNotFoundException.class,
+                AnimalRegistrationExceptions.AnimalNotFoundException.class,
                 () -> animalService.getAnimalByRegistrationNumber(reg)
         );
     }
@@ -177,7 +177,7 @@ class AnimalServiceTest {
     @Test
     void deleteAnimal_notFound() {
         assertThrows(
-                AnimalExceptions.AnimalNotFoundException.class,
+                AnimalRegistrationExceptions.AnimalNotFoundException.class,
                 () -> animalService.deleteAnimal("DOES-NOT-EXIST")
         );
     }
