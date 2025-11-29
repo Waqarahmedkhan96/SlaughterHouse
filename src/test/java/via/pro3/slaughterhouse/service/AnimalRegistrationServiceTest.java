@@ -3,7 +3,7 @@ package via.pro3.slaughterhouse.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import via.pro3.slaughterhouse.dto.AnimalRegistrationDtos;
+import via.pro3.slaughterhouse.dto.rest.AnimalRegistrationDtos;
 import via.pro3.slaughterhouse.exception.AnimalRegistrationExceptions;
 
 import java.time.LocalDate;

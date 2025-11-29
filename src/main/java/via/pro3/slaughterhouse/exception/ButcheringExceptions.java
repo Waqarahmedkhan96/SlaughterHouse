@@ -3,7 +3,7 @@ package via.pro3.slaughterhouse.exception;
 /**
  * All station 2 specific exceptions.
  */
-public class CuttingAndTrayExceptions {
+public class ButcheringExceptions {
 
     public static class TrayNotFoundException extends RuntimeException {
         public TrayNotFoundException(Long id) {

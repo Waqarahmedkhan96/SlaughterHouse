@@ -17,8 +17,9 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING) // store enum as text ("SAME_TYPE", "HALF_ANIMAL")
     @Column(nullable = false)
-    private ProductKind kind; // "Half animal", "Pack of ribs" , SAME_TYPE | HALF_ANIMAL
+    private ProductKind kind;
 
     // join table product_items(product_id, part_id)
     @ManyToMany

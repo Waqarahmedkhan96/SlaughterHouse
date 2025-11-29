@@ -1,14 +1,16 @@
 // 3. Station 3, products are packed for distribution.
 package via.pro3.slaughterhouse.service;
 
+import org.springframework.dao.DataAccessException; // DB errors
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import via.pro3.slaughterhouse.dto.ProductPackagingDtos;
+import via.pro3.slaughterhouse.dto.rest.PackagingDtos;
 import via.pro3.slaughterhouse.entity.Part;
 import via.pro3.slaughterhouse.entity.Product;
 import via.pro3.slaughterhouse.entity.ProductKind;
-import via.pro3.slaughterhouse.exception.CuttingAndTrayExceptions;
-import via.pro3.slaughterhouse.exception.ProductPackagingExceptions;
+import via.pro3.slaughterhouse.exception.ButcheringExceptions;
+import via.pro3.slaughterhouse.exception.PackagingExceptions;
+import via.pro3.slaughterhouse.rabbitmq.publisher.PackagingMessagePublisher;
 import via.pro3.slaughterhouse.repository.PartRepository;
 import via.pro3.slaughterhouse.repository.ProductRepository;
 
@@ -18,69 +20,85 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
-public class ProductPackagingService {
+public class PackagingService {
 
     private static final int MIN_UNIQUE_TYPES_FOR_HALF_ANIMAL = 3; // simple rule
 
     private final ProductRepository productRepository;
     private final PartRepository partRepository;
+    private final PackagingMessagePublisher productMessagePublisher; // product publisher
 
-    public ProductPackagingService(ProductRepository productRepository,
-                                   PartRepository partRepository) {
+    public PackagingService(ProductRepository productRepository,
+                            PartRepository partRepository,
+                            PackagingMessagePublisher productMessagePublisher) {
         this.productRepository = productRepository;
         this.partRepository = partRepository;
+        this.productMessagePublisher = productMessagePublisher;
     }
 
     // ---------- CREATE ----------
-    // create new product
-    public ProductPackagingDtos.ProductDto createProduct(ProductPackagingDtos.CreateProductDto dto) {
+    // create new product (no @Transactional – offline fallback)
+    public PackagingDtos.ProductDto createProduct(PackagingDtos.CreateProductDto dto) {
         if (dto.getPartIds() == null || dto.getPartIds().isEmpty()) {
-            throw new ProductPackagingExceptions.InvalidProductCompositionException(
+            throw new PackagingExceptions.InvalidProductCompositionException(
                     "Product must contain at least one part");
         }
 
-        Set<Part> parts = loadParts(dto.getPartIds());
+        try {
+            Set<Part> parts = loadParts(dto.getPartIds());
 
-        // validate composition based on kind
-        if (dto.getKind() == ProductKind.SAME_TYPE) {
-            validateSameTypeParts(parts);
-        } else if (dto.getKind() == ProductKind.HALF_ANIMAL) {
-            validateHalfAnimalParts(parts);
+            // validate composition based on kind
+            if (dto.getKind() == ProductKind.SAME_TYPE) {
+                validateSameTypeParts(parts);
+            } else if (dto.getKind() == ProductKind.HALF_ANIMAL) {
+                validateHalfAnimalParts(parts);
+            }
+
+            Product product = new Product();
+            product.setKind(dto.getKind());
+            product.setParts(parts);
+
+            Product saved = productRepository.save(product);
+            return toProductDto(saved);
+        } catch (DataAccessException ex) {
+            // DB offline
+            productMessagePublisher.sendProductCreation(dto); // queue fallback
+
+            PackagingDtos.ProductDto buffered = new PackagingDtos.ProductDto();
+            buffered.setId(null); // id pending
+            buffered.setKind(dto.getKind());
+            buffered.setPartIds(dto.getPartIds());
+            return buffered;
         }
-
-        Product product = new Product();
-        product.setKind(dto.getKind());
-        product.setParts(parts);
-
-        Product saved = productRepository.save(product);
-        return toProductDto(saved);
     }
 
     // ---------- READ ----------
     // get product by id
-    public ProductPackagingDtos.ProductDto getProductById(Long id) {
+    @Transactional(readOnly = true)
+    public PackagingDtos.ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductPackagingExceptions.ProductNotFoundException(id));
+                .orElseThrow(() -> new PackagingExceptions.ProductNotFoundException(id));
         return toProductDto(product);
     }
 
     // get all products
-    public ProductPackagingDtos.ProductListDto getAllProducts() {
+    @Transactional(readOnly = true)
+    public PackagingDtos.ProductListDto getAllProducts() {
         List<Product> products = productRepository.findAll();
-        ProductPackagingDtos.ProductListDto listDto = new ProductPackagingDtos.ProductListDto();
+        PackagingDtos.ProductListDto listDto = new PackagingDtos.ProductListDto();
         listDto.setProducts(products.stream().map(this::toProductDto).toList());
         return listDto;
     }
 
     // ---------- UPDATE ----------
     // update existing product
-    public ProductPackagingDtos.ProductDto updateProduct(
+    @Transactional // write transaction
+    public PackagingDtos.ProductDto updateProduct(
             Long id,
-            ProductPackagingDtos.UpdateProductDto dto) {
+            PackagingDtos.UpdateProductDto dto) {
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductPackagingExceptions.ProductNotFoundException(id));
+                .orElseThrow(() -> new PackagingExceptions.ProductNotFoundException(id));
 
         // determine new kind (if changed)
         ProductKind newKind = product.getKind();
@@ -111,9 +129,10 @@ public class ProductPackagingService {
 
     // ---------- DELETE ----------
     // delete product by id
+    @Transactional // write transaction
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new ProductPackagingExceptions.ProductNotFoundException(id);
+            throw new PackagingExceptions.ProductNotFoundException(id);
         }
         productRepository.deleteById(id);
     }
@@ -124,7 +143,7 @@ public class ProductPackagingService {
         Set<Part> parts = new HashSet<>();
         for (Long partId : partIds) {
             Part part = partRepository.findById(partId)
-                    .orElseThrow(() -> new CuttingAndTrayExceptions.PartNotFoundException(partId));
+                    .orElseThrow(() -> new ButcheringExceptions.PartNotFoundException(partId));
             parts.add(part);
         }
         return parts;
@@ -136,7 +155,7 @@ public class ProductPackagingService {
         boolean allSameType = parts.stream()
                 .allMatch(p -> p.getType().equals(type));
         if (!allSameType) {
-            throw new ProductPackagingExceptions.InvalidProductCompositionException(
+            throw new PackagingExceptions.InvalidProductCompositionException(
                     "SAME_TYPE product must contain parts of the same type");
         }
     }
@@ -148,15 +167,15 @@ public class ProductPackagingService {
                 .collect(Collectors.toSet());
 
         if (uniqueTypes.size() < MIN_UNIQUE_TYPES_FOR_HALF_ANIMAL) {
-            throw new ProductPackagingExceptions.InvalidProductCompositionException(
+            throw new PackagingExceptions.InvalidProductCompositionException(
                     "HALF_ANIMAL product must contain parts of at least "
                             + MIN_UNIQUE_TYPES_FOR_HALF_ANIMAL + " different types");
         }
     }
 
     // convert product entity to dto
-    private ProductPackagingDtos.ProductDto toProductDto(Product product) {
-        ProductPackagingDtos.ProductDto dto = new ProductPackagingDtos.ProductDto();
+    private PackagingDtos.ProductDto toProductDto(Product product) {
+        PackagingDtos.ProductDto dto = new PackagingDtos.ProductDto();
         dto.setId(product.getId());
         dto.setKind(product.getKind());
         dto.setPartIds(product.getParts().stream()

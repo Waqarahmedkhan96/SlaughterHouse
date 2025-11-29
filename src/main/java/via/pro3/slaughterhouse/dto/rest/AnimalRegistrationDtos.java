@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.dto;
+package via.pro3.slaughterhouse.dto.rest;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

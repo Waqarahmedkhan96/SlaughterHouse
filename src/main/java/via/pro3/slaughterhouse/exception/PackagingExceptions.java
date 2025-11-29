@@ -3,7 +3,7 @@ package via.pro3.slaughterhouse.exception;
 /**
  * All station 3 specific exceptions.
  */
-public class ProductPackagingExceptions {
+public class PackagingExceptions {
 
     public static class ProductNotFoundException extends RuntimeException {
         public ProductNotFoundException(Long id) {

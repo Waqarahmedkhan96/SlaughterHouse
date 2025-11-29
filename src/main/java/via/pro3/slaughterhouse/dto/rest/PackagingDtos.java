@@ -1,4 +1,4 @@
-package via.pro3.slaughterhouse.dto;
+package via.pro3.slaughterhouse.dto.rest;
 
 import via.pro3.slaughterhouse.entity.ProductKind;
 
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * All DTOs for Station 3 (product packaging).
  */
-public class ProductPackagingDtos {
+public class PackagingDtos {
 
     // ---------- CREATE ----------
     // create product dto

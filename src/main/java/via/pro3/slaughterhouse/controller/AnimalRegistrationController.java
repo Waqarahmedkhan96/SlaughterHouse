@@ -4,10 +4,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import via.pro3.slaughterhouse.dto.AnimalRegistrationDtos;
+import via.pro3.slaughterhouse.dto.rest.AnimalRegistrationDtos;
 import via.pro3.slaughterhouse.service.AnimalRegistrationService;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/animals")
@@ -19,14 +20,29 @@ public class AnimalRegistrationController {
         this.animalService = animalService;
     }
 
-    // use ResponseEntity to return correct HTTP status codes (201, 404, 204)
     // ---------- CREATE ----------
     @PostMapping
-    public ResponseEntity<AnimalRegistrationDtos.AnimalDto> createAnimal(
-            @RequestBody AnimalRegistrationDtos.CreateAnimalDto dto) {
+    public ResponseEntity<?> createAnimal( // generic body
+                                           @RequestBody AnimalRegistrationDtos.CreateAnimalDto dto) {
 
         AnimalRegistrationDtos.AnimalDto created = animalService.createAnimal(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
+        if (created == null) {
+            // queued (db down)
+            Map<String, Object> body = Map.of(
+                    "status", "QUEUED",                                // queued flag
+                    "message", "Database unavailable. Animal stored in queue.",
+                    "registrationNumber", dto.getRegistrationNumber()  // echo reg
+            );
+            return ResponseEntity
+                    .status(HttpStatus.ACCEPTED) // 202
+                    .body(body);
+        }
+
+        // saved in db
+        return ResponseEntity
+                .status(HttpStatus.CREATED) // 201
+                .body(created);
     }
 
     // ---------- READ ONE ----------

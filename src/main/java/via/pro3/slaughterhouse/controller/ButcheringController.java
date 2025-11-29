@@ -3,8 +3,10 @@ package via.pro3.slaughterhouse.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import via.pro3.slaughterhouse.dto.ButcheringDtos;
+import via.pro3.slaughterhouse.dto.rest.ButcheringDtos;
 import via.pro3.slaughterhouse.service.ButcheringService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/cutting")
@@ -16,14 +18,29 @@ public class ButcheringController {
         this.cuttingService = cuttingService;
     }
 
-    // ---------- Create/Post TRAYS ----------
-
+    // ---------- Create TRAYS ----------
     @PostMapping("/trays")
-    public ResponseEntity<ButcheringDtos.TrayDto> createTray(
-            @RequestBody ButcheringDtos.CreateTrayDto dto) {
+    public ResponseEntity<?> createTray( // generic body
+                                         @RequestBody ButcheringDtos.CreateTrayDto dto) {
 
         ButcheringDtos.TrayDto created = cuttingService.createTray(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
+        if (created == null) {
+            // queued (db down)
+            Map<String, Object> body = Map.of(
+                    "status", "QUEUED",                  // queued flag
+                    "message", "Database unavailable. Tray stored in queue.",
+                    "type", dto.getType(),              // tray type
+                    "maxWeight", dto.getMaxWeight()     // capacity
+            );
+            return ResponseEntity
+                    .status(HttpStatus.ACCEPTED) // 202
+                    .body(body);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED) // 201
+                .body(created);
     }
 
     @GetMapping("/trays/{id}")
@@ -39,13 +56,30 @@ public class ButcheringController {
     }
 
     // ---------- PARTS ----------
-
     @PostMapping("/parts")
-    public ResponseEntity<ButcheringDtos.PartDto> createPart(
-            @RequestBody ButcheringDtos.CreatePartDto dto) {
+    public ResponseEntity<?> createPart( // generic body
+                                         @RequestBody ButcheringDtos.CreatePartDto dto) {
 
         ButcheringDtos.PartDto created = cuttingService.createPart(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
+        if (created == null) {
+            // queued (db down)
+            Map<String, Object> body = Map.of(
+                    "status", "QUEUED",                            // queued flag
+                    "message", "Database unavailable. Part stored in queue.",
+                    "type", dto.getType(),                        // part type
+                    "weight", dto.getWeight(),                    // part weight
+                    "animalRegistrationNumber", dto.getAnimalRegistrationNumber(),
+                    "trayId", dto.getTrayId()                     // optional tray
+            );
+            return ResponseEntity
+                    .status(HttpStatus.ACCEPTED) // 202
+                    .body(body);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED) // 201
+                .body(created);
     }
 
     @GetMapping("/parts/{id}")
