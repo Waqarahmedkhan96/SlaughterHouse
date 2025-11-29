@@ -14,57 +14,62 @@ import static org.junit.jupiter.api.Assertions.*;
 class AnimalRegistrationServiceTest {
 
     @Autowired
-    private AnimalRegistrationService animalService;
+    private AnimalRegistrationService animalService; // real service
 
     // ---------- CREATE ----------
 
     @Test
     void createAnimal_success() {
-        String reg = "T-UNIT-1";
+        String reg = "T-UNIT-1";                  // test reg no
 
-        // if exists → delete first (avoid duplicate error)
         try {
-            animalService.deleteAnimal(reg);
-        } catch (AnimalRegistrationExceptions.AnimalNotFoundException ignored) {}
+            animalService.deleteAnimal(reg);      // cleanup old
+        } catch (AnimalRegistrationExceptions.AnimalNotFoundException ignored) {
+            // ignore if missing                     // ignore missing
+        }
 
-        AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
-        dto.setRegistrationNumber(reg);
-        dto.setWeight(400.5);
-        dto.setArrivalDate(LocalDate.now());
-        dto.setOrigin("TestFarm");
+        AnimalRegistrationDtos.CreateAnimalDto dto =
+                new AnimalRegistrationDtos.CreateAnimalDto(); // create DTO
+        dto.setRegistrationNumber(reg);            // set reg
+        dto.setWeight(400.5);                      // set weight
+        dto.setArrivalDate(LocalDate.now());      // set date
+        dto.setOrigin("TestFarm");                // set origin
 
-        AnimalRegistrationDtos.AnimalDto created = animalService.createAnimal(dto);
+        AnimalRegistrationDtos.AnimalDto created =
+                animalService.createAnimal(dto);  // call service
 
-        assertEquals(reg, created.getRegistrationNumber());
-        assertEquals("TestFarm", created.getOrigin());
+        assertEquals(reg, created.getRegistrationNumber()); // same reg
+        assertEquals("TestFarm", created.getOrigin());      // same origin
+        assertEquals(400.5, created.getWeight());           // same weight
     }
 
     @Test
     void createAnimal_duplicate_throwsException() {
-        String reg = "T-UNIT-2";
+        String reg = "T-UNIT-2";                  // test reg no
 
         // ensure one exists
         try {
-            animalService.getAnimalByRegistrationNumber(reg);
-        } catch (Exception e) {
-            // create if missing
-            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
-            dto.setRegistrationNumber(reg);
-            dto.setWeight(500.0);
-            dto.setArrivalDate(LocalDate.now());
-            dto.setOrigin("Farm X");
-            animalService.createAnimal(dto);
+            animalService.getAnimalByRegistrationNumber(reg); // try get
+        } catch (Exception e) {                               // if missing
+            AnimalRegistrationDtos.CreateAnimalDto dto =
+                    new AnimalRegistrationDtos.CreateAnimalDto(); // new DTO
+            dto.setRegistrationNumber(reg);                 // reg
+            dto.setWeight(500.0);                           // weight
+            dto.setArrivalDate(LocalDate.now());            // date
+            dto.setOrigin("Farm X");                        // origin
+            animalService.createAnimal(dto);                // create once
         }
 
-        AnimalRegistrationDtos.CreateAnimalDto duplicate = new AnimalRegistrationDtos.CreateAnimalDto();
-        duplicate.setRegistrationNumber(reg);
-        duplicate.setWeight(900.0);
-        duplicate.setArrivalDate(LocalDate.now());
-        duplicate.setOrigin("Farm Y");
+        AnimalRegistrationDtos.CreateAnimalDto duplicate =
+                new AnimalRegistrationDtos.CreateAnimalDto();   // duplicate dto
+        duplicate.setRegistrationNumber(reg);                 // same reg
+        duplicate.setWeight(900.0);                           // diff weight
+        duplicate.setArrivalDate(LocalDate.now());            // date
+        duplicate.setOrigin("Farm Y");                        // origin
 
         assertThrows(
-                AnimalRegistrationExceptions.AnimalAlreadyExistsException.class,
-                () -> animalService.createAnimal(duplicate)
+                AnimalRegistrationExceptions.AnimalAlreadyExistsException.class, // expected
+                () -> animalService.createAnimal(duplicate)                      // call again
         );
     }
 
@@ -72,18 +77,33 @@ class AnimalRegistrationServiceTest {
 
     @Test
     void getAnimalByRegistrationNumber_found() {
-        AnimalRegistrationDtos.AnimalDto dto =
-                animalService.getAnimalByRegistrationNumber("DK-0001");
+        String reg = "T-READ-1";                // test reg
 
-        assertEquals("DK-0001", dto.getRegistrationNumber());
-        assertNotNull(dto.getWeight());
+        // ensure exists
+        try {
+            animalService.getAnimalByRegistrationNumber(reg); // try get
+        } catch (Exception e) {                               // if missing
+            AnimalRegistrationDtos.CreateAnimalDto dto =
+                    new AnimalRegistrationDtos.CreateAnimalDto(); // build dto
+            dto.setRegistrationNumber(reg);                 // reg
+            dto.setWeight(333.3);                           // weight
+            dto.setArrivalDate(LocalDate.now());            // date
+            dto.setOrigin("ReadFarm");                      // origin
+            animalService.createAnimal(dto);                // create
+        }
+
+        AnimalRegistrationDtos.AnimalDto dto =
+                animalService.getAnimalByRegistrationNumber(reg); // call read
+
+        assertEquals(reg, dto.getRegistrationNumber());  // correct reg
+        assertNotNull(dto.getWeight());                  // weight present
     }
 
     @Test
     void getAnimalByRegistrationNumber_notFound() {
         assertThrows(
-                AnimalRegistrationExceptions.AnimalNotFoundException.class,
-                () -> animalService.getAnimalByRegistrationNumber("DOES-NOT-EXIST")
+                AnimalRegistrationExceptions.AnimalNotFoundException.class, // expected
+                () -> animalService.getAnimalByRegistrationNumber("DOES-NOT-EXIST") // invalid reg
         );
     }
 
@@ -91,60 +111,97 @@ class AnimalRegistrationServiceTest {
 
     @Test
     void getAnimalsByArrivalDate_listReturned() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now();              // today date
 
-        var list = animalService.getAnimalsByArrivalDate(today);
+        // create one for today
+        String reg = "T-DATE-1";                        // test reg
+        AnimalRegistrationDtos.CreateAnimalDto dto =
+                new AnimalRegistrationDtos.CreateAnimalDto(); // create dto
+        dto.setRegistrationNumber(reg);                 // reg
+        dto.setWeight(200.0);                           // weight
+        dto.setArrivalDate(today);                      // today
+        dto.setOrigin("DateFarm");                      // origin
+        try {
+            animalService.createAnimal(dto);            // try create
+        } catch (AnimalRegistrationExceptions.AnimalAlreadyExistsException ignored) {
+            // ignore duplicates                          // ignore
+        }
 
-        assertNotNull(list);
-        assertTrue(list.getAnimals().size() >= 0);
+        AnimalRegistrationDtos.AnimalListDto list =
+                animalService.getAnimalsByArrivalDate(today); // query
+
+        assertNotNull(list);                             // list not null
+        assertNotNull(list.getAnimals());                // animals not null
+        assertTrue(list.getAnimals().size() >= 1);       // at least one
     }
 
     // ---------- LIST BY ORIGIN ----------
 
     @Test
     void getAnimalsByOrigin_listReturned() {
-        var list = animalService.getAnimalsByOrigin("Farm A");
+        String origin = "Farm A";                       // test origin
 
-        assertNotNull(list.getAnimals());
+        // create sample
+        String reg = "T-ORIGIN-1";                      // test reg
+        AnimalRegistrationDtos.CreateAnimalDto dto =
+                new AnimalRegistrationDtos.CreateAnimalDto(); // dto
+        dto.setRegistrationNumber(reg);                 // reg
+        dto.setWeight(250.0);                           // weight
+        dto.setArrivalDate(LocalDate.now());            // date
+        dto.setOrigin(origin);                          // origin
+        try {
+            animalService.createAnimal(dto);            // create
+        } catch (AnimalRegistrationExceptions.AnimalAlreadyExistsException ignored) {
+            // ignore duplicate                           // ignore
+        }
+
+        AnimalRegistrationDtos.AnimalListDto list =
+                animalService.getAnimalsByOrigin(origin); // query
+
+        assertNotNull(list.getAnimals());               // not null
+        assertTrue(list.getAnimals().size() >= 1);      // at least one
     }
 
     // ---------- UPDATE ----------
 
     @Test
     void updateAnimal_success() {
-        String reg = "T-UPDATE-1";
+        String reg = "T-UPDATE-1";                     // test reg
 
         // ensure exists
         try {
-            animalService.getAnimalByRegistrationNumber(reg);
-        } catch (Exception e) {
-            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
-            dto.setRegistrationNumber(reg);
-            dto.setWeight(300.0);
-            dto.setArrivalDate(LocalDate.now());
-            dto.setOrigin("OldFarm");
-            animalService.createAnimal(dto);
+            animalService.getAnimalByRegistrationNumber(reg); // try get
+        } catch (Exception e) {                               // if missing
+            AnimalRegistrationDtos.CreateAnimalDto dto =
+                    new AnimalRegistrationDtos.CreateAnimalDto(); // dto
+            dto.setRegistrationNumber(reg);                 // reg
+            dto.setWeight(300.0);                           // weight
+            dto.setArrivalDate(LocalDate.now());            // date
+            dto.setOrigin("OldFarm");                       // origin
+            animalService.createAnimal(dto);                // create
         }
 
-        AnimalRegistrationDtos.UpdateAnimalDto updateDto = new AnimalRegistrationDtos.UpdateAnimalDto();
-        updateDto.setWeight(777.7);
-        updateDto.setOrigin("NewFarm");
+        AnimalRegistrationDtos.UpdateAnimalDto updateDto =
+                new AnimalRegistrationDtos.UpdateAnimalDto(); // update dto
+        updateDto.setWeight(777.7);                         // new weight
+        updateDto.setOrigin("NewFarm");                     // new origin
 
         AnimalRegistrationDtos.AnimalDto updated =
-                animalService.updateAnimal(reg, updateDto);
+                animalService.updateAnimal(reg, updateDto); // call update
 
-        assertEquals(777.7, updated.getWeight());
-        assertEquals("NewFarm", updated.getOrigin());
+        assertEquals(777.7, updated.getWeight());           // updated weight
+        assertEquals("NewFarm", updated.getOrigin());       // updated origin
     }
 
     @Test
     void updateAnimal_notFound() {
-        AnimalRegistrationDtos.UpdateAnimalDto update = new AnimalRegistrationDtos.UpdateAnimalDto();
-        update.setWeight(999.9);
+        AnimalRegistrationDtos.UpdateAnimalDto update =
+                new AnimalRegistrationDtos.UpdateAnimalDto(); // dto
+        update.setWeight(999.9);                           // any weight
 
         assertThrows(
-                AnimalRegistrationExceptions.AnimalNotFoundException.class,
-                () -> animalService.updateAnimal("NO-ANIMAL", update)
+                AnimalRegistrationExceptions.AnimalNotFoundException.class, // expected
+                () -> animalService.updateAnimal("NO-ANIMAL", update)      // invalid reg
         );
     }
 
@@ -152,33 +209,34 @@ class AnimalRegistrationServiceTest {
 
     @Test
     void deleteAnimal_success() {
-        String reg = "T-DELETE-1";
+        String reg = "T-DELETE-1";                     // test reg
 
-        // create if not exists
+        // ensure exists
         try {
-            animalService.getAnimalByRegistrationNumber(reg);
-        } catch (Exception e) {
-            AnimalRegistrationDtos.CreateAnimalDto dto = new AnimalRegistrationDtos.CreateAnimalDto();
-            dto.setRegistrationNumber(reg);
-            dto.setWeight(300.0);
-            dto.setArrivalDate(LocalDate.now());
-            dto.setOrigin("ForDelete");
-            animalService.createAnimal(dto);
+            animalService.getAnimalByRegistrationNumber(reg); // try get
+        } catch (Exception e) {                               // if missing
+            AnimalRegistrationDtos.CreateAnimalDto dto =
+                    new AnimalRegistrationDtos.CreateAnimalDto(); // dto
+            dto.setRegistrationNumber(reg);                 // reg
+            dto.setWeight(300.0);                           // weight
+            dto.setArrivalDate(LocalDate.now());            // date
+            dto.setOrigin("ForDelete");                     // origin
+            animalService.createAnimal(dto);                // create
         }
 
-        animalService.deleteAnimal(reg);
+        animalService.deleteAnimal(reg);                   // call delete
 
         assertThrows(
-                AnimalRegistrationExceptions.AnimalNotFoundException.class,
-                () -> animalService.getAnimalByRegistrationNumber(reg)
+                AnimalRegistrationExceptions.AnimalNotFoundException.class, // expected
+                () -> animalService.getAnimalByRegistrationNumber(reg)      // fetch again
         );
     }
 
     @Test
     void deleteAnimal_notFound() {
         assertThrows(
-                AnimalRegistrationExceptions.AnimalNotFoundException.class,
-                () -> animalService.deleteAnimal("DOES-NOT-EXIST")
+                AnimalRegistrationExceptions.AnimalNotFoundException.class, // expected
+                () -> animalService.deleteAnimal("DOES-NOT-EXIST")          // invalid reg
         );
     }
 }
