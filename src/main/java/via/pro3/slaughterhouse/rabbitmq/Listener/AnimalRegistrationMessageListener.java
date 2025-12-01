@@ -1,10 +1,12 @@
 package via.pro3.slaughterhouse.rabbitmq.Listener;
 
+import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 import via.pro3.slaughterhouse.dto.rabbitmq.AnimalRegistrationMessageDtos;
 import via.pro3.slaughterhouse.entity.Animal;
 import via.pro3.slaughterhouse.rabbitmq.RabbitMqConfig;
@@ -14,7 +16,7 @@ import via.pro3.slaughterhouse.repository.AnimalRepository;
  * Consumes animal registration messages from RabbitMQ
  * and writes them to the database when possible.
  */
-@Component
+@Component // Spring bean
 public class AnimalRegistrationMessageListener {
 
     private static final Logger log =
@@ -22,31 +24,40 @@ public class AnimalRegistrationMessageListener {
 
     private final AnimalRepository animalRepository;
 
+    // constructor injection
     public AnimalRegistrationMessageListener(AnimalRepository animalRepository) {
         this.animalRepository = animalRepository;
     }
 
-    // consume from queue
+    // listen to queue
     @RabbitListener(queues = RabbitMqConfig.ANIMAL_REGISTRATION_QUEUE)
     public void onMessage(AnimalRegistrationMessageDtos msg) {
         try {
-            // build entity
+            // build entity from DTO
             Animal animal = new Animal();
             animal.setRegistrationNumber(msg.getRegistrationNumber());
             animal.setWeight(msg.getWeight());
             animal.setArrivalDate(msg.getArrivalDate());
             animal.setOrigin(msg.getOriginFarm());
 
-            // save to db
+            // save to DB
             animalRepository.save(animal);
             log.info("Animal from queue saved: {}", msg.getRegistrationNumber());
+
+        } catch (CannotCreateTransactionException | JDBCConnectionException ex) {
+            // DB down → requeue
+            log.error("DB unavailable. Requeuing message...", ex);
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (DataAccessException ex) {
-            // db still down: rethrow to requeue
-            log.error("DB error while saving queued animal, will be retried", ex);
-            throw ex; // causes message to be requeued (depending on config)
+            // JPA/Hibernate DB error → requeue
+            log.error("Database access error. Message will be retried...", ex);
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (Exception ex) {
-            // unexpected error: log and drop or handle differently
-            log.error("Unexpected error processing animal registration message", ex);
+            // unknown bug → do NOT retry
+            log.error("Unexpected error. Dropping message to avoid infinite loop.", ex);
+            // no rethrow → message is ACKed and not redelivered
         }
     }
 }

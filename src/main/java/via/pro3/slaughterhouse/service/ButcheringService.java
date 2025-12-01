@@ -38,7 +38,6 @@ public class ButcheringService {
     // ---------------- TRAYS ----------------
 
     // create new tray (no @Transactional – offline fallback)
-
     public ButcheringDtos.TrayDto createTray(ButcheringDtos.CreateTrayDto dto) {
         try {
             Tray tray = new Tray();
@@ -126,7 +125,6 @@ public class ButcheringService {
     // ---------------- PARTS ----------------
 
     // create new part (no @Transactional – offline fallback)
-    @Transactional
     public ButcheringDtos.PartDto createPart(ButcheringDtos.CreatePartDto dto) {
         try {
             // find origin animal

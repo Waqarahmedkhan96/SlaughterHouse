@@ -52,7 +52,7 @@ public class AnimalRegistrationService {
             buffered.setWeight(dto.getWeight());
             buffered.setArrivalDate(dto.getArrivalDate());
             buffered.setOrigin(dto.getOrigin());
-            return buffered;
+            return buffered; // immediate offline response
         }
     }
 

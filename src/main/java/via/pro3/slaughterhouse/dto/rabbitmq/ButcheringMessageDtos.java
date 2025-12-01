@@ -8,7 +8,9 @@ import java.io.Serializable;
 public class ButcheringMessageDtos {
 
     // ---------- Tray message ----------
-    public static class TrayMessageDto implements Serializable {
+    public static class TrayMessageDto implements Serializable {  // send via RabbitMQ
+
+        private static final long serialVersionUID = 1L;          // version id
 
         private String type;
         private double maxWeight;
@@ -41,7 +43,9 @@ public class ButcheringMessageDtos {
     }
 
     // ---------- Part message ----------
-    public static class PartMessageDto implements Serializable {
+    public static class PartMessageDto implements Serializable {  // send via RabbitMQ
+
+        private static final long serialVersionUID = 1L;          // version id
 
         private double weight;
         private String type;

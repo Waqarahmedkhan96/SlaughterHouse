@@ -2,12 +2,15 @@ package via.pro3.slaughterhouse.dto.rabbitmq;
 
 import via.pro3.slaughterhouse.entity.ProductKind;
 
+import java.io.Serializable;   // enable Java serialization
 import java.util.List;
 
 /**
  * Message for creating products when DB is down.
  */
-public class PackagingMessageDtos {
+public class PackagingMessageDtos implements Serializable {   // send via RabbitMQ
+
+    private static final long serialVersionUID = 1L;          // version id
 
     private ProductKind kind;
     private List<Long> partIds;

@@ -25,8 +25,9 @@ public class AnimalRegistrationMessagePublisher {
                 dto.getWeight(),
                 dto.getArrivalDate(),
                 dto.getOrigin()
-        );
+        ); // build message dto
 
-        rabbitTemplate.convertAndSend(RabbitMqConfig.ANIMAL_REGISTRATION_QUEUE, msg);
+        // send JSON message
+        rabbitTemplate.convertAndSend(RabbitMqConfig.ANIMAL_REGISTRATION_QUEUE, msg); // publish to queue
     }
 }

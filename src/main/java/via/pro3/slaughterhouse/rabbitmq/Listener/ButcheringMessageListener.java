@@ -1,10 +1,12 @@
 package via.pro3.slaughterhouse.rabbitmq.Listener;
 
+import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 import via.pro3.slaughterhouse.dto.rabbitmq.ButcheringMessageDtos;
 import via.pro3.slaughterhouse.entity.Animal;
 import via.pro3.slaughterhouse.entity.Part;
@@ -47,11 +49,18 @@ public class ButcheringMessageListener {
 
             trayRepository.save(tray);
             log.info("Tray from queue saved: type={}, maxWeight={}", msg.getType(), msg.getMaxWeight());
+
+        } catch (CannotCreateTransactionException | JDBCConnectionException ex) {
+            log.error("DB unavailable. Requeuing tray message...", ex); // DB down retry
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (DataAccessException ex) {
-            log.error("DB error while saving queued tray, will be retried", ex);
-            throw ex; // requeue message
+            log.error("Database access error. Tray message will be retried...", ex); // JPA error
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (Exception ex) {
-            log.error("Unexpected error processing tray message", ex);
+            log.error("Unexpected error. Dropping tray message to avoid infinite loop.", ex); // no retry
+            // no rethrow → message ACKed
         }
     }
 
@@ -78,11 +87,18 @@ public class ButcheringMessageListener {
 
             partRepository.save(part);
             log.info("Part from queue saved for animal: {}", msg.getAnimalRegistrationNumber());
+
+        } catch (CannotCreateTransactionException | JDBCConnectionException ex) {
+            log.error("DB unavailable. Requeuing part message...", ex); // DB down retry
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (DataAccessException ex) {
-            log.error("DB error while saving queued part, will be retried", ex);
-            throw ex; // requeue message
+            log.error("Database access error. Part message will be retried...", ex); // JPA error
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (Exception ex) {
-            log.error("Unexpected error processing part message", ex);
+            log.error("Unexpected error. Dropping part message to avoid infinite loop.", ex); // no retry
+            // no rethrow → message ACKed
         }
     }
 }

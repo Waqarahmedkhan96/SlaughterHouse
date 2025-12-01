@@ -1,11 +1,14 @@
 package via.pro3.slaughterhouse.dto.rabbitmq;
 
+import java.io.Serializable;              // enable Java serialization
 import java.time.LocalDate;
 
 /**
  * Message sent to RabbitMQ when DB is down during animal registration.
  */
-public class AnimalRegistrationMessageDtos {
+public class AnimalRegistrationMessageDtos implements Serializable {  // allow sending to RabbitMQ
+
+    private static final long serialVersionUID = 1L;  // serialization version id
 
     private String registrationNumber;
     private double weight;

@@ -1,10 +1,12 @@
 package via.pro3.slaughterhouse.rabbitmq.Listener;
 
+import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.CannotCreateTransactionException;
 import via.pro3.slaughterhouse.dto.rabbitmq.PackagingMessageDtos;
 import via.pro3.slaughterhouse.entity.Part;
 import via.pro3.slaughterhouse.entity.Product;
@@ -57,11 +59,18 @@ public class PackagingMessageListener {
 
             productRepository.save(product);
             log.info("Product from queue saved with kind: {}", msg.getKind());
+
+        } catch (CannotCreateTransactionException | JDBCConnectionException ex) {
+            log.error("DB unavailable. Requeuing product message...", ex); // DB down retry
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (DataAccessException ex) {
-            log.error("DB error while saving queued product, will be retried", ex);
-            throw ex; // requeue message
+            log.error("Database access error. Product message will be retried...", ex); // JPA error
+            throw ex; // rethrow → RabbitMQ retries
+
         } catch (Exception ex) {
-            log.error("Unexpected error processing product message", ex);
+            log.error("Unexpected error. Dropping product message to avoid infinite loop.", ex); // no retry
+            // no rethrow → message ACKed
         }
     }
 }

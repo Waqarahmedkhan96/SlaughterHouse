@@ -1,0 +1,107 @@
+RabbitMQ Testing Guide
+1: Start Spring Boot Application
+2: Stop Postgres from window-services
+3: Start RabbitMq  either through Application from window or through rabbitmq command prompt.
+4: Enable RabbitMQ-Management Plug in with this command in  rabbitmq command prompt terminal.
+   "rabbitmq-plugins.bat enable rabbitmq_management"
+5: Open RabbitMQ server http://localhost:15672
+6: Enter username(guest) and password(quest)
+7: Open Postman and post animal or tray etc., and then you'd be able to see that the request is in queue on you rabbitmq server.
+8: Start your postgres again, and you will see that data is stored in DB
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+RabbitMQ Testing Guide -> (Postgres Down → Queue → Back Up)
+
+   One-time setup (only first time on this PC)
+Step:1 - Start RabbitMQ Management Plugin**
+   → Open → Start Menu → RabbitMQ Command Prompt (sbin)*
+   → Type this and press Enter:
+     "rabbitmq-plugins.bat enable rabbitmq_management"
+   → This turns on the "Web UI" for RabbitMQ.
+
+Step 2 Start RabbitMQ server**
+   → From Start Menu → start **RabbitMQ Service**
+   → Or open **RabbitMQ Command Prompt (sbin)**
+   → Open browser → go to: `http://localhost:15672`
+   → Login:
+     → **Username:** `guest`
+     → **Password:** `guest`
+   → Click on the “Queues” to see the queues.
+
+
+Step 3 – Start Spring Boot App
+   4 Run your main class: `SlaughterHouseApplication`
+
+
+Step 5 - Open Windows Services
+   → Press `Win + R` → type `services.msc` → press Enter
+   → In the list, scroll and find something like:
+     → `postgresql-x64-15` or similar (your version)
+   → Right-click it → click **Stop**.
+   → Now your **database is OFF** (Spring Boot cannot save to DB).
+
+
+
+Step 6 - Send POST request from Postman(Animal / Tray)
+
+   → Open **Postman**
+   → Example: `POST http://localhost:9090/animals`
+   → Send a valid JSON body (like your animal DTO).
+
+   What happens now:
+   → Station 1:
+     *→Tries to save to DB → fails because Postgres is down
+     * →Still **publishes event** to RabbitMQ (AnimalRegisteredEvent).
+   → RabbitMQ:
+     * Puts this message in **your queue** (e.g. `animal-registered-queue`).
+
+Step 7 - **Check queue in RabbitMQ UI**
+   → Go to **Queues** in `http://localhost:15672`
+   → Open your queue (e.g. `animal-registered-queue`)
+   → You should see **1 or more messages** in **Ready** state.
+
+ Step 8 – Start PostgreSQL service
+
+   → Go back to **Services** window
+   → Right-click your Postgres service → **Start**.
+   → Now the **database is back online**.
+
+Step 9 - Watch the magic 🪄
+
+   → Your **listener** (RabbitMQ @RabbitListener in Spring Boot) keeps trying to process messages.
+   → When DB is back:
+
+     → It processes the queued message
+     → Saves data into DB
+     → Acknowledges the message → message disappears from queue.
+
+Step 10 - **Verify in DB**
+
+     → Open pgAdmin or your DB tool
+     → Check the **Animal** table (or Tray, etc.)
+     → You will see the new row inserted **after** you restarted Postgres.
+
+
+
+
+
+
+
+
+→ Short Explanation of the “Magic”
+
+* **Station 1** doesn’t talk directly to **Station 2** or DB.
+* It just **drops a message into RabbitMQ** (like a mailbox).
+* If DB (or Station 2) is down:
+
+  * The message **stays in the queue** (safe, not lost).
+* When DB is back:
+
+  * The listener **retries**
+  * Processes all waiting messages
+  * Saves them to DB.
+
+
+
+
